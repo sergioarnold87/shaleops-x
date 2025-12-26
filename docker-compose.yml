@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # --- MINIO: Simula AWS S3 ---
+  minio:
+    image: minio/minio:latest
+    container_name: shaleops-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "admin"
+      MINIO_ROOT_PASSWORD: "password123"
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio_data:/data
+    networks:
+      - shaleops-net
+
+  # --- SPARK MASTER: Imagen Oficial de Apache ---
+  spark-master:
+    image: apache/spark:3.5.0
+    container_name: shaleops-spark-master
+    user: root # Necesario para tener permisos en los volúmenes montados
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./pipelines:/opt/spark/pipelines
+      - ./data_generator:/opt/spark/data
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    networks:
+      - shaleops-net
+
+  # --- SPARK WORKER ---
+  spark-worker:
+    image: apache/spark:3.5.0
+    container_name: shaleops-spark-worker
+    user: root
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    volumes:
+      - ./pipelines:/opt/spark/pipelines
+      - ./data_generator:/opt/spark/data
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - shaleops-net
+
+networks:
+  shaleops-net:
+    driver: bridge
