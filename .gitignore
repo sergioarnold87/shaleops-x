@@ -1,12 +1,17 @@
 # Python
 __pycache__/
-.venv/
 *.py[cod]
+*.class
+.venv/
+env/
+build/
+dist/
 
-# Docker & Data (No queremos subir el Data Lake entero)
-minio_data/
-data_generator/bronze_landing_zone.parquet
-.DS_Store
-
-# IDE
+# IDEs
 .vscode/
+.idea/
+
+# Data (Ignoramos los datos locales, ya que usamos MinIO)
+data/
+*.parquet
+*.csv
